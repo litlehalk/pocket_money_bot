@@ -76,9 +76,4 @@ def main():
     print("Bot started.")
     bot.polling(non_stop=True, interval=5)
 
-while True:
-    try:
-        main()
-    except Exception as e:
-        print(f"{time.ctime()}: error: {type(e)}: {e.args}")
-        time.sleep(10)
+main()
