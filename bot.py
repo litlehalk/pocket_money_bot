@@ -43,9 +43,9 @@ def start_message(message):
 
 @bot.message_handler(commands=['balance'])
 def check_balance(message):
-    if os.getenv("MONEY") == 0:
+    if int(os.getenv("MONEY")) == 0:
         bot.send_message(message.chat.id, f"я бедный!!! у меня {os.getenv("MONEY")} на балансе :(")
-    elif os.getenv("MONEY") > 0:
+    elif int(os.getenv("MONEY")) > 0:
         bot.send_message(message.chat.id, f"у меня {os.getenv("MONEY")} на балансе")
 
 @bot.message_handler(commands=['spend'])
@@ -53,7 +53,7 @@ def spend_money(message):
     try:
         amount = int(message.text.split()[1])
 
-        if os.getenv("MONEY") >= amount:
+        if int(os.getenv("MONEY")) >= amount:
             os.environ["MONEY"] = os.getenv("MONEY") - amount
             bot.send_message(message.chat.id, f"списано {amount} денег. у меня осталось {os.getenv("MONEY")}.")
         else:
