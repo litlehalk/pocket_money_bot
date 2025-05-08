@@ -19,7 +19,7 @@ bot = telebot.TeleBot(TOKEN, exception_handler=ExceptionHandler())
 
 def add_weekly_points():
     amount = 20
-    os.environ["MONEY"] = os.getenv("MONEY") + amount
+    os.environ["MONEY"] = int(os.getenv("MONEY")) + amount
     users = {"azq878": 365279431, "catfish_nd": 801222813}
     
     for user_id in users.values():
@@ -54,7 +54,7 @@ def spend_money(message):
         amount = int(message.text.split()[1])
 
         if int(os.getenv("MONEY")) >= amount:
-            os.environ["MONEY"] = os.getenv("MONEY") - amount
+            os.environ["MONEY"] = int(os.getenv("MONEY")) - amount
             bot.send_message(message.chat.id, f"списано {amount} денег. у меня осталось {os.getenv("MONEY")}.")
         else:
             bot.send_message(message.chat.id, "недостаточно денег!")
@@ -65,7 +65,7 @@ def spend_money(message):
 def add_money(message):
     try:
         amount = int(message.text.split()[1])
-        os.environ["MONEY"] = os.getenv("MONEY") + amount
+        os.environ["MONEY"] = int(os.getenv("MONEY")) + amount
         bot.send_message(message.chat.id, f"начислено {amount} денег. не стоить злоупотреблять этой командой!")
     except (IndexError, ValueError):
         bot.send_message(message.chat.id, f"не забывай! для добавления денег комманда: /add 'деньга'. баланс: {os.getenv("MONEY")}")
