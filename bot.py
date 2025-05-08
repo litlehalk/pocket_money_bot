@@ -9,9 +9,6 @@ import os
 
 class ExceptionHandler(telebot.ExceptionHandler):
     def handle(self, exception):
-        log = load_log()
-        log[time.ctime()] = f"error: {type(exception)}: {exception.args}"
-        save_log(log)
         print(f"{time.ctime()}: error: {type(exception)}: {exception.args}")
         return True
 
