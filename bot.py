@@ -86,7 +86,7 @@ def save_value(amount: int, user: str, total: int):
         cur = conn.cursor()
         
         insert_query = """
-            INSERT INTO pocket_money (amount, user, total, date)
+            INSERT INTO pocket_money (amount, user_id, total, date)
             VALUES (%s, %s, %s, %s)
         """
         cur.execute(insert_query, (amount, user, total, datetime.utcnow()))
@@ -125,7 +125,7 @@ def get_last_entries(n):
 def iniDB():
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS pocket_money (id SERIAL PRIMARY KEY, amount INTEGER, user TEXT, total INTEGER, date TIMESTAMP);")
+    cursor.execute("CREATE TABLE IF NOT EXISTS pocket_money (id SERIAL PRIMARY KEY, amount INTEGER, user_id TEXT, total INTEGER, date TIMESTAMP);")
     conn.commit()
 
 ## MAIN
