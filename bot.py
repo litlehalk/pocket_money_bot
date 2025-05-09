@@ -80,6 +80,15 @@ def add_money(message):
     except (IndexError, ValueError):
         bot.send_message(message.chat.id, f"не забывай! для добавления денег комманда: /add 'деньга'.")
 
+@bot.message_handler(commands=['audit'])
+def audit(message):
+    if len(message.text.split()) == 2:
+        amount = int(message.text.split()[1])
+    else:
+        amount = 10
+    transactions = get_last_entries(amount)
+    bot.send_message(message.chat.id, f"История последних {amount} операций:\n{transactions}")
+
 def save_value(amount: int, user: str, total: int):
     try:
         conn = psycopg2.connect(DATABASE_URL)
