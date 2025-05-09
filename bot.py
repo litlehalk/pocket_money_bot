@@ -44,7 +44,7 @@ def run_scheduler():
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
-    bot.send_message(message.chat.id, "привет, это бот для управления моими деньжаточками! \nсписок комманд: \n/balance - посмотреть баланс \n/add - добавить денег \n/spend - потратить деньги\n/audit - посмотреть логи транзакций")
+    bot.send_message(message.chat.id, "Привет, это бот для управления моими деньжаточками! \nсписок комманд: \n/balance - посмотреть баланс \n/add - добавить денег \n/spend - потратить деньги\n/audit - посмотреть логи транзакций")
 
 @bot.message_handler(commands=['balance'])
 def check_balance(message):
