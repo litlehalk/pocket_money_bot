@@ -19,7 +19,7 @@ bot = telebot.TeleBot(TOKEN, exception_handler=ExceptionHandler())
 
 def add_weekly_points():
     amount = 20
-    os.environ["MONEY"] = int(os.getenv("MONEY")) + amount
+    os.environ["MONEY"] = str(int(os.getenv("MONEY")) + amount)
     users = {"azq878": 365279431, "catfish_nd": 801222813}
     
     for user_id in users.values():
@@ -30,7 +30,7 @@ def add_weekly_points():
 
 
 def run_scheduler():
-    schedule.every().friday.at("08:00").do(add_weekly_points)
+    schedule.every().friday.at("08:16").do(add_weekly_points)
     while True:
         schedule.run_pending()
         time.sleep(60)
