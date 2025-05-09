@@ -6,6 +6,7 @@ import threading
 import os
 import psycopg2
 from datetime import datetime
+from psycopg2.extras import RealDictCursor
 
 ## BOT INITIALISATION
 
@@ -75,7 +76,7 @@ def add_money(message):
         last_total = get_last_total()
         new_total = last_total + amount
         save_value(amount, str(message.chat.id), new_total)
-        bot.send_message(message.chat.id, f"начислено {amount} денег. не стоить злоупотреблять этой командой! На счету {new_total}.")
+        bot.send_message(message.chat.id, f"начислено {amount} денег. Не стоит злоупотреблять этой командой! На счету {new_total}.")
     except (IndexError, ValueError):
         bot.send_message(message.chat.id, f"не забывай! для добавления денег комманда: /add 'деньга'.")
 
@@ -98,7 +99,7 @@ def save_value(amount: int, user: str, total: int):
         print(f"Error saving value: {e}")
 
 def get_last_total() -> int:
-    entries = get_last_entries(n)
+    entries = get_last_entries(1)
     for entry in entries:
         if entry.get("total") is not None:
             return entry["total"]
@@ -113,10 +114,10 @@ def get_last_entries(n):
                 (n,)
             )
             entries = cursor.fetchall()
-            return entries if entries else None
+            return entries if entries else []
     except Exception as e:
         print(f"Database error: {e}")
-        return None
+        return []
     finally:
         if connection:
             connection.close()
@@ -129,6 +130,7 @@ def iniDB():
 
 ## MAIN
 def main():
+    iniDB()
     threading.Thread(target=run_scheduler, daemon=True).start()
     print("Bot started.")
     bot.polling(non_stop=True, interval=5)
