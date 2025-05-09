@@ -4,6 +4,8 @@ import schedule
 import time
 import threading
 import os
+import psycopg2
+from datetime import datetime
 
 ## BOT INITIALISATION
 
@@ -12,6 +14,7 @@ class ExceptionHandler(telebot.ExceptionHandler):
         print(f"{time.ctime()}: error: {type(exception)}: {exception.args}")
         return True
 
+DATABASE_URL = os.getenv("DATABASE_URL")
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN, exception_handler=ExceptionHandler())
 
@@ -19,12 +22,13 @@ bot = telebot.TeleBot(TOKEN, exception_handler=ExceptionHandler())
 
 def add_weekly_points():
     amount = 20
-    os.environ["MONEY"] = str(int(os.getenv("MONEY")) + amount)
-    users = {"azq878": 365279431, "catfish_nd": 801222813}
+    new_total = get_last_total() + amount
+    save_value(amount, 'BOT', new_total)
     
+    users = {"azq878": 365279431, "catfish_nd": 801222813}
     for user_id in users.values():
         try:
-            bot.send_message(user_id, f"сегодня пятница! добавлено {amount} денег.\nбаланс: {os.getenv("MONEY")}.")
+            bot.send_message(user_id, f"сегодня пятница! добавлено {amount} денег.\nбаланс: {new_total}.")
         except Exception as e:
             print(f"ошибка при отправке сообщения пользователю {user_id}: {e}!!")
 
@@ -43,19 +47,22 @@ def start_message(message):
 
 @bot.message_handler(commands=['balance'])
 def check_balance(message):
-    if int(os.getenv("MONEY")) == 0:
-        bot.send_message(message.chat.id, f"я бедный!!! у меня {os.getenv("MONEY")} на балансе :(")
-    elif int(os.getenv("MONEY")) > 0:
-        bot.send_message(message.chat.id, f"у меня {os.getenv("MONEY")} на балансе")
+    last_total = get_last_total()
+    if last_total == 0:
+        bot.send_message(message.chat.id, f"я бедный!!! у меня {last_total} на балансе :(")
+    elif last_total > 0:
+        bot.send_message(message.chat.id, f"у меня {last_total} на балансе")
 
 @bot.message_handler(commands=['spend'])
 def spend_money(message):
     try:
         amount = int(message.text.split()[1])
-
-        if int(os.getenv("MONEY")) >= amount:
-            os.environ["MONEY"] = str(int(os.getenv("MONEY")) - amount)
-            bot.send_message(message.chat.id, f"списано {amount} денег. у меня осталось {os.getenv("MONEY")}.")
+        last_total = get_last_total()
+        
+        if last_total >= amount:
+            new_total = last_total - amount
+            save_value(-amount, str(message.chat.id), new_total)
+            bot.send_message(message.chat.id, f"списано {amount} денег. у меня осталось {new_total}.")
         else:
             bot.send_message(message.chat.id, "недостаточно денег!")
     except (IndexError, ValueError):
@@ -65,10 +72,60 @@ def spend_money(message):
 def add_money(message):
     try:
         amount = int(message.text.split()[1])
-        os.environ["MONEY"] = str(int(os.getenv("MONEY")) + amount)
-        bot.send_message(message.chat.id, f"начислено {amount} денег. не стоить злоупотреблять этой командой!")
+        last_total = get_last_total()
+        new_total = last_total + amount
+        save_value(amount, str(message.chat.id), new_total)
+        bot.send_message(message.chat.id, f"начислено {amount} денег. не стоить злоупотреблять этой командой! На счету {new_total}.")
     except (IndexError, ValueError):
-        bot.send_message(message.chat.id, f"не забывай! для добавления денег комманда: /add 'деньга'. баланс: {os.getenv("MONEY")}")
+        bot.send_message(message.chat.id, f"не забывай! для добавления денег комманда: /add 'деньга'.")
+
+def save_value(amount: int, user: str, total: int):
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        
+        insert_query = """
+            INSERT INTO pocket_money (amount, user, total, date)
+            VALUES (%s, %s, %s, %s)
+        """
+        cur.execute(insert_query, (amount, user, total, datetime.utcnow()))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("Value saved successfully.")
+    except Exception as e:
+        print(f"Error saving value: {e}")
+
+def get_last_total() -> int:
+    entries = get_last_entries(n)
+    for entry in entries:
+        if entry.get("total") is not None:
+            return entry["total"]
+    return 0
+
+def get_last_entries(n):
+    try:
+        connection = psycopg2.connect(DATABASE_URL)
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                "SELECT * FROM pocket_money ORDER BY date DESC LIMIT %s;",
+                (n,)
+            )
+            entries = cursor.fetchall()
+            return entries if entries else None
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
+    finally:
+        if connection:
+            connection.close()
+
+def iniDB():
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS pocket_money (id SERIAL PRIMARY KEY, amount INTEGER, user TEXT, total INTEGER, date TIMESTAMP);")
+    conn.commit()
 
 ## MAIN
 def main():
